@@ -180,29 +180,15 @@ function generateSeoAltText({ orientation, tone, dominant, cleanedName }) {
   const keywords = cleanedName
     .split(/\s+/)
     .filter(Boolean)
-    .slice(0, 6)
+    .slice(0, 5)
     .join(' ');
 
-  const subject = keywords || 'main scene';
-  const base = `Bright ${orientation} photo of ${subject}, showing ${dominant}, ${tone} light, clear subject details, natural texture, clean background depth, and sharp edges across the full frame.`;
-  return clampAltTextWordCount(base, 20, 30);
-}
+  const base = `Detailed ${orientation} photo featuring ${keywords || 'the main subject'} with ${dominant}, ${tone} lighting, crisp textures, and natural depth, clearly highlighting the scene for search relevance and accessibility context.`;
 
-function clampAltTextWordCount(text, minWords, maxWords) {
-  const words = text.trim().split(/\s+/).filter(Boolean);
-
-  if (words.length > maxWords) {
-    return words.slice(0, maxWords).join(' ');
-  }
-
-  if (words.length < minWords) {
-    const filler = ['with', 'vivid', 'colors', 'and', 'well-defined', 'visual', 'contrast'];
-    while (words.length < minWords && filler.length) {
-      words.push(filler.shift());
-    }
-  }
-
-  return words.join(' ');
+  const words = base.trim().split(/\s+/);
+  if (words.length > 30) return words.slice(0, 30).join(' ');
+  if (words.length < 20) return `${base} Professional quality imagery.`;
+  return base;
 }
 
 function clearWorkflow() {
