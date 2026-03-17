@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ImageFlow AI Optimizer</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app-shell">
+    <header class="hero">
+      <h1>ImageFlow AI Optimizer</h1>
+      <p>Upload once, optimize quality, convert to WebP, generate SEO-friendly alt text, then download in seconds.</p>
+    </header>
+
+    <section class="controls card">
+      <label class="file-drop" for="imageInput">
+        <input id="imageInput" type="file" accept="image/*" multiple />
+        <span>Drop images here or <strong>click to upload</strong></span>
+        <small>Batch supported • Original backups optional • Fast WebP output</small>
+      </label>
+
+      <div class="options-grid">
+        <label>
+          Quality level
+          <input id="qualityInput" type="range" min="0.6" max="0.95" step="0.01" value="0.86" />
+          <output id="qualityOutput">86%</output>
+        </label>
+
+        <label>
+          Target size reduction
+          <input id="reductionInput" type="range" min="0.15" max="0.7" step="0.01" value="0.35" />
+          <output id="reductionOutput">35%</output>
+        </label>
+
+        <label class="check">
+          <input id="keepOriginal" type="checkbox" checked />
+          Keep original file as backup
+        </label>
+      </div>
+
+      <button id="processBtn" class="primary" disabled>Optimize + Convert + Generate Alt Text</button>
+    </section>
+
+    <section id="results" class="results"></section>
+  </main>
+
+  <template id="itemTemplate">
+    <article class="image-card card">
+      <div class="compare">
+        <figure>
+          <figcaption>Original</figcaption>
+          <img class="original-preview" alt="Original preview" />
+          <p class="meta original-meta"></p>
+        </figure>
+        <figure>
+          <figcaption>Optimized WebP</figcaption>
+          <img class="optimized-preview" alt="Optimized preview" />
+          <p class="meta optimized-meta"></p>
+        </figure>
+      </div>
+
+      <label>
+        SEO Alt Text (editable)
+        <textarea class="alt-input" rows="3"></textarea>
+      </label>
+
+      <div class="actions">
+        <button class="download-one">Download this image</button>
+        <span class="copied-msg" aria-live="polite"></span>
+      </div>
+    </article>
+  </template>
+
+  <div id="footerActions" class="footer-actions hidden">
+    <button id="downloadAll" class="primary">Download All WebP</button>
+    <button id="clearAll" class="ghost">Clear</button>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
