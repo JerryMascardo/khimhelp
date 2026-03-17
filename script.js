@@ -89,7 +89,7 @@ async function processImage(file, initialQuality, reductionRatio) {
   const optimizedUrl = URL.createObjectURL(blob);
   const webpName = `${file.name.replace(/\.[^.]+$/, '')}.webp`;
 
-  const descriptor = describeVisuals(imageEl);
+  const descriptor = describeVisuals(imageEl, file.name);
   const altText = generateSeoAltText(descriptor);
 
   URL.revokeObjectURL(srcUrl);
@@ -143,86 +143,52 @@ function renderImageCard(item) {
   results.appendChild(fragment);
 }
 
-function describeVisuals(img) {
+function describeVisuals(img, filename) {
   const w = img.naturalWidth;
   const h = img.naturalHeight;
   const ratio = w / h;
-  const orientation = ratio > 1.15 ? 'wide' : ratio < 0.87 ? 'vertical' : 'square';
+  const orientation = ratio > 1.15 ? 'landscape' : ratio < 0.87 ? 'portrait' : 'square';
 
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
-  canvas.width = Math.min(140, w);
-  canvas.height = Math.min(140, h);
+  canvas.width = Math.min(120, w);
+  canvas.height = Math.min(120, h);
   ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
   const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
 
-  let r = 0;
-  let g = 0;
-  let b = 0;
-  let warmPixels = 0;
-  let vividPixels = 0;
-
+  let r = 0, g = 0, b = 0;
   for (let i = 0; i < data.length; i += 4) {
-    const pr = data[i];
-    const pg = data[i + 1];
-    const pb = data[i + 2];
-    r += pr;
-    g += pg;
-    b += pb;
-
-    const max = Math.max(pr, pg, pb);
-    const min = Math.min(pr, pg, pb);
-    const sat = max === 0 ? 0 : (max - min) / max;
-
-    if (pr > pb && pr > pg * 0.9) warmPixels += 1;
-    if (sat > 0.45) vividPixels += 1;
+    r += data[i];
+    g += data[i + 1];
+    b += data[i + 2];
   }
 
   const pixels = data.length / 4;
-  const avgR = Math.round(r / pixels);
-  const avgG = Math.round(g / pixels);
-  const avgB = Math.round(b / pixels);
-  const brightness = (avgR * 299 + avgG * 587 + avgB * 114) / 1000;
-  const tone = brightness > 165 ? 'bright' : brightness < 90 ? 'moody' : 'soft';
-  const warmRatio = warmPixels / pixels;
-  const vividRatio = vividPixels / pixels;
+  r = Math.round(r / pixels);
+  g = Math.round(g / pixels);
+  b = Math.round(b / pixels);
 
-  const dominant = avgR > avgG && avgR > avgB
-    ? 'warm orange and red hues'
-    : avgG > avgR && avgG > avgB
-      ? 'rich green tones'
-      : 'cool blue tones';
+  const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+  const tone = brightness > 170 ? 'bright' : brightness < 85 ? 'dark' : 'balanced';
+  const dominant = r > g && r > b ? 'red tones' : g > r && g > b ? 'green tones' : 'blue tones';
+  const cleanedName = filename.replace(/[-_]/g, ' ').replace(/\.[^.]+$/, '');
 
-  return { orientation, tone, dominant, warmRatio, vividRatio };
+  return { orientation, tone, dominant, cleanedName };
 }
 
-function generateSeoAltText({ orientation, tone, dominant, warmRatio, vividRatio }) {
-  const likelySunset = warmRatio > 0.46 && vividRatio > 0.24;
+function generateSeoAltText({ orientation, tone, dominant, cleanedName }) {
+  const keywords = cleanedName
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 5)
+    .join(' ');
 
-  if (likelySunset) {
-    return 'Sunset over the horizon with vibrant orange and red hues, scattered clouds, and gentle sun rays creating a warm, serene atmosphere in a natural landscape scene.';
-  }
+  const base = `Detailed ${orientation} photo featuring ${keywords || 'the main subject'} with ${dominant}, ${tone} lighting, crisp textures, and natural depth, clearly highlighting the scene for search relevance and accessibility context.`;
 
-  const colorMood = vividRatio > 0.3 ? 'vibrant color contrast' : 'natural color balance';
-  const sentence = `${orientation.charAt(0).toUpperCase() + orientation.slice(1)} photo featuring ${dominant}, clear subject details, realistic textures, and ${tone} lighting, with ${colorMood} and an appealing, focused composition.`;
-  return clampAltTextWordCount(sentence, 20, 30);
-}
-
-function clampAltTextWordCount(text, minWords, maxWords) {
-  const words = text.trim().split(/\s+/).filter(Boolean);
-
-  if (words.length > maxWords) {
-    return words.slice(0, maxWords).join(' ');
-  }
-
-  if (words.length < minWords) {
-    const filler = ['with', 'natural', 'depth', 'and', 'clean', 'visual', 'clarity'];
-    while (words.length < minWords && filler.length) {
-      words.push(filler.shift());
-    }
-  }
-
-  return words.join(' ');
+  const words = base.trim().split(/\s+/);
+  if (words.length > 30) return words.slice(0, 30).join(' ');
+  if (words.length < 20) return `${base} Professional quality imagery.`;
+  return base;
 }
 
 function clearWorkflow() {
